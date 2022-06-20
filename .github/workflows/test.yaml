@@ -3,13 +3,25 @@ on: ["push", "pull_request"]
 name: Test
 
 jobs:
+  find-templates:
+    runs-on: ubuntu-latest
+    outputs:
+      templates: ${{ steps.find-templates.outputs.templates }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Find templates
+      id: find-templates
+      run: |
+        TEMPLATES=${{ toJSON(`find tests -type f -exec basename {} .json \;`) }}
+        echo ::set-output name=templates::${TEMPLATES}
+
   validate-template:
+    needs:
+    - find-templates
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        template:
-        - Basic
-        - Mintable
+        template: ${{ fromJSON(needs.find-templates.outputs.templates) }}
     steps:
     - uses: actions/checkout@v2
     - uses: ApeWorX/github-action@v1
